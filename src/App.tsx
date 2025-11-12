@@ -1,56 +1,47 @@
-import React, { useState, useContext } from 'react';
-import { AppContext } from './context/AppContext';
-import Welcome from './components/Welcome';
-import Onboarding from './components/Onboarding';
+import { useState } from 'react';
+import Header from './components/Header';
 import Dashboard from './components/Dashboard';
-import TransactionHistory from './components/TransactionHistory';
-import AddTransaction from './components/AddTransaction';
-import Navbar from './components/Navbar';
-import TaxHelper from './components/TaxHelper';
-import Auth from './components/Auth';
+import AddTransactionModal from './components/AddTransactionModal';
+import ReceiptScanner from './components/ReceiptScanner';
+import { Plus, ScanLine } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 
-export type Page = 'dashboard' | 'history' | 'add' | 'taxhelper';
-
-const App: React.FC = () => {
-  const { isAuthenticated, onboarded, setOnboarded } = useContext(AppContext);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-
-  if (showWelcome) {
-    return <Welcome onFinish={() => setShowWelcome(false)} />;
-  }
-  
-  if (!isAuthenticated) {
-    return <Auth />;
-  }
-
-  if (!onboarded) {
-    return <Onboarding onFinish={() => setOnboarded(true)} />;
-  }
-  
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard setCurrentPage={setCurrentPage} />;
-      case 'history':
-        return <TransactionHistory />;
-      case 'add':
-        return <AddTransaction goBack={() => setCurrentPage('dashboard')} />;
-      case 'taxhelper':
-        return <TaxHelper goBack={() => setCurrentPage('dashboard')} />;
-      default:
-        return <Dashboard setCurrentPage={setCurrentPage} />;
-    }
-  };
+export default function App() {
+  const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
+  const [isScannerOpen, setScannerOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-sans">
-      <main className="flex-grow pb-20">
-        {renderPage()}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
+      <Header />
+      <main className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+        <Dashboard />
       </main>
-      <Navbar currentPage={currentPage} setCurrentPage={setCurrentPage} />
+      
+      <div className="fixed bottom-6 right-6 flex flex-col items-center gap-4">
+        <button
+          onClick={() => setScannerOpen(true)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full p-4 shadow-lg transform transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:focus:ring-offset-gray-900"
+          aria-label="Scan Receipt"
+        >
+          <ScanLine className="h-6 w-6" />
+        </button>
+        <button
+          onClick={() => setTransactionModalOpen(true)}
+          className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-full p-4 shadow-lg transform transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 dark:focus:ring-offset-gray-900"
+          aria-label="Add Transaction"
+        >
+          <Plus className="h-8 w-8" />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isTransactionModalOpen && (
+          <AddTransactionModal onClose={() => setTransactionModalOpen(false)} />
+        )}
+        {isScannerOpen && (
+          <ReceiptScanner onClose={() => setScannerOpen(false)} />
+        )}
+      </AnimatePresence>
     </div>
   );
-};
-
-export default App;
+}
