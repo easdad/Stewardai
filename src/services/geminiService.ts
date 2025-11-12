@@ -64,6 +64,10 @@ export async function parseReceipt(base64Image: string): Promise<ReceiptData> {
       },
     });
 
+    if (!response.text) {
+      throw new Error("Failed to analyze receipt: The AI service returned an empty response.");
+    }
+
     const jsonString = response.text.trim();
     const parsedData = JSON.parse(jsonString);
 
