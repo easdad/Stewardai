@@ -57,8 +57,15 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         const jsonString = response.text;
         const parsedData = JSON.parse(jsonString);
 
-        // Validate date format, default to today if invalid or missing
-        if (typeof parsedData.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+        // More robust date validation to satisfy the TypeScript compiler
+        let dateIsValid = false;
+        if (typeof parsedData.date === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+                dateIsValid = true;
+            }
+        }
+
+        if (!dateIsValid) {
             parsedData.date = new Date().toISOString().split('T')[0];
         }
 
