@@ -1,0 +1,7 @@
+{
+  "name": "Steward",
+  "description": "A financial tracking app for private contractors to log income and expenses, scan receipts with AI, and estimate tax obligations.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
