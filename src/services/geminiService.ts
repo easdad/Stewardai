@@ -1,28 +1,13 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { Transaction, TransactionType } from '../types';
 
-// Define the expected structure of the JSON response from the Gemini API.
-// This helps TypeScript understand the data shape and prevents type errors.
-type GeminiData = {
-  date?: string;
-  source?: string;
-  amount?: number;
-  type?: TransactionType;
-  category?: string;
-}
-
 // The API key must be sourced exclusively from `process.env.API_KEY`.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
-
-// A dedicated, type-safe helper function to validate the date string.
-// This isolates the logic in a simple context that strict compilers can easily verify,
-// guaranteeing that `.test()` is only ever called on a string.
-const isValidDateString = (date: unknown): boolean => {
-    if (typeof date !== 'string') {
-        return false;
-    }
-    return /^\d{4}-\d{2}-\d{2}$/.test(date);
-};
+const apiKey = process.env.API_KEY;
+if (!apiKey) {
+    // This provides a clear, build-time error if the API key is missing.
+    throw new Error("VITE_API_KEY is not set in the environment.");
+}
+const ai = new GoogleGenAI({ apiKey });
 
 const schema = {
   type: Type.OBJECT,
@@ -51,6 +36,12 @@ const schema = {
   required: ['date', 'source', 'amount', 'type', 'category'],
 };
 
+/**
+ * A type guard to check if a value is a valid TransactionType.
+ */
+function isTransactionType(type: any): type is TransactionType {
+    return type === 'income' || type === 'expense';
+}
 
 export const parseDocument = async (imageDataBase64: string, userCategories: string[]): Promise<Partial<Transaction>> => {
     try {
@@ -75,15 +66,47 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         });
 
         const jsonString = response.text;
-        const parsedData: GeminiData = JSON.parse(jsonString);
+        // Parse into 'unknown' to force manual, safe type validation.
+        const parsedJson: unknown = JSON.parse(jsonString);
 
-        // Use the type-safe helper function for validation.
-        // If the date is not a validly formatted string, set it to today's date.
-        if (!isValidDateString(parsedData.date)) {
-            parsedData.date = new Date().toISOString().split('T')[0];
+        // Perform robust, explicit validation on the parsed data.
+        if (typeof parsedJson !== 'object' || parsedJson === null) {
+            throw new Error("Invalid response format from API.");
         }
 
-        return parsedData;
+        const data = parsedJson as Record<string, unknown>;
+        const validatedTransaction: Partial<Transaction> = {};
+
+        // Validate 'date'
+        const rawDate = data.date;
+        if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+            validatedTransaction.date = rawDate;
+        } else {
+            validatedTransaction.date = new Date().toISOString().split('T')[0];
+        }
+
+        // Validate 'source'
+        if (typeof data.source === 'string') {
+            validatedTransaction.source = data.source;
+        }
+
+        // Validate 'amount'
+        if (typeof data.amount === 'number') {
+            validatedTransaction.amount = data.amount;
+        }
+
+        // Validate 'type'
+        if (isTransactionType(data.type)) {
+            validatedTransaction.type = data.type;
+        }
+
+        // Validate 'category'
+        if (typeof data.category === 'string') {
+            validatedTransaction.category = data.category;
+        }
+
+        return validatedTransaction;
+
     } catch (error) {
         console.error("Error parsing document with Gemini:", error);
         throw new Error("Failed to analyze the document. Please enter the details manually.");

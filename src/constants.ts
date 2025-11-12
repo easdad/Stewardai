@@ -15,7 +15,6 @@ export const DEFAULT_CATEGORIES: { type: TransactionType, name: Category }[] = [
 
 // Self-Employment Tax Constants
 export const NET_EARNINGS_PERCENTAGE = 0.9235;
-// Using the wage base you provided.
 export const SOCIAL_SECURITY_WAGE_BASE = 176000; 
 export const SOCIAL_SECURITY_RATE = 0.124;
 export const MEDICARE_RATE = 0.029;
