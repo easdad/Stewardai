@@ -1,18 +1,9 @@
 import { useTransactions } from '../hooks/useTransactions';
+import { Trash2, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpCircle, ArrowDownCircle, Trash2, Calendar, FileText } from 'lucide-react';
 
 export default function TransactionList() {
   const { transactions, deleteTransaction } = useTransactions();
-
-  if (transactions.length === 0) {
-    return (
-      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md text-center">
-        <p className="text-gray-500 dark:text-gray-400">No transactions yet.</p>
-        <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Add your first income or expense to get started!</p>
-      </div>
-    );
-  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -21,45 +12,54 @@ export default function TransactionList() {
     }).format(amount);
   };
 
+  if (transactions.length === 0) {
+    return (
+      <div className="text-center py-10 px-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+        <p className="text-gray-500 dark:text-gray-400">No transactions yet. Add one to get started!</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
       <ul className="divide-y divide-gray-200 dark:divide-gray-700">
         <AnimatePresence>
           {transactions.map((t) => (
             <motion.li
               key={t.id}
               layout
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -50, transition: { duration: 0.2 } }}
-              className="p-4 flex items-center justify-between"
+              className="px-6 py-4 flex items-center justify-between"
             >
-              <div className="flex items-center">
-                {t.type === 'income' ? (
-                  <ArrowUpCircle className="w-8 h-8 text-emerald-500 mr-4" />
-                ) : (
-                  <ArrowDownCircle className="w-8 h-8 text-red-500 mr-4" />
-                )}
-                <div className="flex flex-col">
-                  <span className="font-semibold text-lg">{t.description}</span>
-                  <div className='flex items-center text-gray-500 dark:text-gray-400 text-sm mt-1'>
-                    <Calendar className='w-3.5 h-3.5 mr-1.5' />
-                    <span>{t.date}</span>
-                  </div>
+              <div className="flex items-center space-x-4">
+                <div className={`p-2 rounded-full ${t.type === 'income' ? 'bg-emerald-100 dark:bg-emerald-900' : 'bg-red-100 dark:bg-red-900'}`}>
+                  {t.type === 'income' ? (
+                    <ArrowUpRight className="w-5 h-5 text-emerald-500" />
+                  ) : (
+                    <ArrowDownLeft className="w-5 h-5 text-red-500" />
+                  )}
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-white">{t.description}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center">
-                <span className={`font-bold text-lg mr-6 ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
-                  {t.type === 'income' ? '+' : '-'}
-                  {formatCurrency(t.amount)}
-                </span>
-                <button
-                  onClick={() => deleteTransaction(t.id)}
-                  className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                  aria-label="Delete transaction"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
+              <div className="flex items-center space-x-4">
+                 <p className={`font-semibold ${t.type === 'income' ? 'text-emerald-500' : 'text-red-500'}`}>
+                   {t.type === 'income' ? '+' : '-'}
+                   {formatCurrency(t.amount)}
+                 </p>
+                 <button
+                   onClick={() => deleteTransaction(t.id)}
+                   className="p-2 rounded-full text-gray-400 hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                   aria-label={`Delete transaction ${t.description}`}
+                 >
+                   <Trash2 className="w-5 h-5" />
+                 </button>
               </div>
             </motion.li>
           ))}
