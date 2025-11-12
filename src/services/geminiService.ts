@@ -1,5 +1,15 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { Transaction } from '../types';
+import { Transaction, TransactionType } from '../types';
+
+// Define the expected structure of the JSON response from the Gemini API.
+// This helps TypeScript understand the data shape and prevents type errors.
+type GeminiData = {
+  date?: string;
+  source?: string;
+  amount?: number;
+  type?: TransactionType;
+  category?: string;
+}
 
 // The API key must be sourced exclusively from `process.env.API_KEY`.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
@@ -55,17 +65,12 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         });
 
         const jsonString = response.text;
-        const parsedData = JSON.parse(jsonString);
+        // By casting the parsed JSON to our defined type, we give TypeScript a clear structure.
+        const parsedData: GeminiData = JSON.parse(jsonString);
 
-        // More robust date validation to satisfy the TypeScript compiler
-        let dateIsValid = false;
-        if (typeof parsedData.date === 'string') {
-            if (/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
-                dateIsValid = true;
-            }
-        }
-
-        if (!dateIsValid) {
+        // This definitive fix checks if `date` is not a valid string format.
+        // This is unambiguous and satisfies the strict compiler.
+        if (typeof parsedData.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
             parsedData.date = new Date().toISOString().split('T')[0];
         }
 
