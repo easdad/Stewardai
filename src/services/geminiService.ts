@@ -1,8 +1,8 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { Transaction } from '../types';
 
-// FIX: The API key must be sourced exclusively from `process.env.API_KEY`.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// The API key must be sourced exclusively from `process.env.API_KEY`.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 const schema = {
   type: Type.OBJECT,

@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { QUARTERLY_TAX_DEADLINES, STANDARD_DEDUCTIONS } from '../constants';
 import { BotIcon, InfoIcon, SettingsIcon, ChevronDownIcon, LogoIcon } from './common/Icons';
