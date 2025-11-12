@@ -2,12 +2,7 @@ import { GoogleGenAI, Type, Chat } from "@google/genai";
 import { Transaction, TransactionType } from '../types';
 
 // The API key must be sourced exclusively from `process.env.API_KEY`.
-const apiKey = process.env.API_KEY;
-if (!apiKey) {
-    // This provides a clear, build-time error if the API key is missing.
-    throw new Error("VITE_API_KEY is not set in the environment.");
-}
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const schema = {
   type: Type.OBJECT,
@@ -39,7 +34,7 @@ const schema = {
 /**
  * A type guard to check if a value is a valid TransactionType.
  */
-function isTransactionType(type: any): type is TransactionType {
+function isTransactionType(type: unknown): type is TransactionType {
     return type === 'income' || type === 'expense';
 }
 
@@ -66,44 +61,27 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         });
 
         const jsonString = response.text;
-        // Parse into 'unknown' to force manual, safe type validation.
-        const parsedJson: unknown = JSON.parse(jsonString);
+        const rawData: unknown = JSON.parse(jsonString);
 
-        // Perform robust, explicit validation on the parsed data.
-        if (typeof parsedJson !== 'object' || parsedJson === null) {
-            throw new Error("Invalid response format from API.");
+        // Defensive validation: ensure the response is an object before proceeding.
+        if (typeof rawData !== 'object' || rawData === null) {
+            throw new Error("Invalid data structure: AI response is not an object.");
         }
+        
+        const data = rawData as Record<string, unknown>;
 
-        const data = parsedJson as Record<string, unknown>;
-        const validatedTransaction: Partial<Transaction> = {};
+        // Validate each property, providing safe fallbacks.
+        const validatedDate = (typeof data.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(data.date))
+            ? data.date
+            : new Date().toISOString().split('T')[0];
 
-        // Validate 'date'
-        const rawDate = data.date;
-        if (typeof rawDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
-            validatedTransaction.date = rawDate;
-        } else {
-            validatedTransaction.date = new Date().toISOString().split('T')[0];
-        }
-
-        // Validate 'source'
-        if (typeof data.source === 'string') {
-            validatedTransaction.source = data.source;
-        }
-
-        // Validate 'amount'
-        if (typeof data.amount === 'number') {
-            validatedTransaction.amount = data.amount;
-        }
-
-        // Validate 'type'
-        if (isTransactionType(data.type)) {
-            validatedTransaction.type = data.type;
-        }
-
-        // Validate 'category'
-        if (typeof data.category === 'string') {
-            validatedTransaction.category = data.category;
-        }
+        const validatedTransaction: Partial<Transaction> = {
+            date: validatedDate,
+            source: typeof data.source === 'string' ? data.source : undefined,
+            amount: typeof data.amount === 'number' ? data.amount : undefined,
+            type: isTransactionType(data.type) ? data.type : 'expense', // Default to 'expense'
+            category: typeof data.category === 'string' ? data.category : undefined,
+        };
 
         return validatedTransaction;
 

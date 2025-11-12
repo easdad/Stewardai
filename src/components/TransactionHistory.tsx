@@ -5,7 +5,6 @@ import { ArrowUpRightIcon, ArrowDownLeftIcon, EditIcon, TrashIcon, DownloadIcon,
 import TransactionForm from './TransactionForm';
 import { formatCurrencyWithCents } from '../utils/formatters';
 
-
 const TransactionHistory: React.FC = () => {
     const { transactions, deleteTransaction, exportTransactionsToCSV } = useContext(AppContext);
     const [searchTerm, setSearchTerm] = useState('');

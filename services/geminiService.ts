@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Chat } from "@google/genai";
-import { Transaction } from '../types';
+import { Transaction } from './types';
 
 // The API key must be sourced exclusively from `process.env.API_KEY`.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -57,8 +57,9 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         const jsonString = response.text;
         const parsedData = JSON.parse(jsonString);
 
-        // Validate date format, default to today if invalid
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+        // Definitive Fix: Validate that 'date' is a string before testing its format.
+        // This prevents the TypeScript error in strict build environments.
+        if (typeof parsedData.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
             parsedData.date = new Date().toISOString().split('T')[0];
         }
 

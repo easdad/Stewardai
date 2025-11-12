@@ -3,6 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { Transaction } from '../types';
 import { ArrowUpRightIcon, ArrowDownLeftIcon, EditIcon, TrashIcon, DownloadIcon, SearchIcon, LogoIcon, PaperclipIcon, XIcon } from './common/Icons';
 import TransactionForm from './TransactionForm';
+import { formatCurrencyWithCents } from '../utils/formatters';
 
 const TransactionHistory: React.FC = () => {
     const { transactions, deleteTransaction, exportTransactionsToCSV } = useContext(AppContext);
@@ -26,7 +27,7 @@ const TransactionHistory: React.FC = () => {
     };
     
     return (
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 pb-24">
             <header className="mb-6 animate-fadeIn">
                 <div className="flex items-center gap-3 mb-1">
                     <LogoIcon className="h-8 w-8 text-primary" />
@@ -69,7 +70,7 @@ const TransactionHistory: React.FC = () => {
                         </div>
                         <div className="text-right flex-shrink-0">
                             <p className={`font-bold text-lg ${t.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                                {t.type === 'income' ? '+' : '-'} ${t.amount.toFixed(2)}
+                                {t.type === 'income' ? '+' : '-'} {formatCurrencyWithCents(t.amount)}
                             </p>
                         </div>
                          <div className="flex items-center space-x-0">
