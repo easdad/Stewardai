@@ -68,17 +68,20 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         // By casting the parsed JSON to our defined type, we give TypeScript a clear structure.
         const parsedData: GeminiData = JSON.parse(jsonString);
 
-        // This revised, more explicit validation logic is designed to be absolutely
-        // foolproof for even the strictest TypeScript compilers.
-        if (typeof parsedData.date !== 'string') {
-            // If the date is missing or not a string, default to today.
-            parsedData.date = new Date().toISOString().split('T')[0];
-        } else if (!/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
-            // If the date IS a string but has an invalid format, default to today.
-            // In this block, TypeScript knows `parsedData.date` is a string.
+        // This nested validation structure is the definitive fix for strict compilers.
+        // It creates an unambiguous "type safe" scope.
+        if (typeof parsedData.date === 'string') {
+            // In this block, the compiler knows `parsedData.date` is a string,
+            // so we can safely call `.test()` on it.
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+                // The format is invalid, so assign a default.
+                parsedData.date = new Date().toISOString().split('T')[0];
+            }
+            // If the format is valid, do nothing, preserving the correct date.
+        } else {
+            // The date was not a string (e.g., it was undefined), so assign a default.
             parsedData.date = new Date().toISOString().split('T')[0];
         }
-        // If it's a string and the format is valid, we do nothing and keep the original date.
 
         return parsedData;
     } catch (error) {
