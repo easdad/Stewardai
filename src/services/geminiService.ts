@@ -14,6 +14,16 @@ type GeminiData = {
 // The API key must be sourced exclusively from `process.env.API_KEY`.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
+// A dedicated, type-safe helper function to validate the date string.
+// This isolates the logic in a simple context that strict compilers can easily verify,
+// guaranteeing that `.test()` is only ever called on a string.
+const isValidDateString = (date: unknown): boolean => {
+    if (typeof date !== 'string') {
+        return false;
+    }
+    return /^\d{4}-\d{2}-\d{2}$/.test(date);
+};
+
 const schema = {
   type: Type.OBJECT,
   properties: {
@@ -65,21 +75,11 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         });
 
         const jsonString = response.text;
-        // By casting the parsed JSON to our defined type, we give TypeScript a clear structure.
         const parsedData: GeminiData = JSON.parse(jsonString);
 
-        // This nested validation structure is the definitive fix for strict compilers.
-        // It creates an unambiguous "type safe" scope.
-        if (typeof parsedData.date === 'string') {
-            // In this block, the compiler knows `parsedData.date` is a string,
-            // so we can safely call `.test()` on it.
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
-                // The format is invalid, so assign a default.
-                parsedData.date = new Date().toISOString().split('T')[0];
-            }
-            // If the format is valid, do nothing, preserving the correct date.
-        } else {
-            // The date was not a string (e.g., it was undefined), so assign a default.
+        // Use the type-safe helper function for validation.
+        // If the date is not a validly formatted string, set it to today's date.
+        if (!isValidDateString(parsedData.date)) {
             parsedData.date = new Date().toISOString().split('T')[0];
         }
 
