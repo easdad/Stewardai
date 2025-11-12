@@ -68,9 +68,13 @@ export const parseDocument = async (imageDataBase64: string, userCategories: str
         // By casting the parsed JSON to our defined type, we give TypeScript a clear structure.
         const parsedData: GeminiData = JSON.parse(jsonString);
 
-        // This definitive fix checks if `date` is not a valid string format.
-        // This is unambiguous and satisfies the strict compiler.
-        if (typeof parsedData.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+        // This definitive fix ensures type safety for the strict compiler.
+        // It first guarantees that `parsedData.date` is a string before testing its format.
+        if (typeof parsedData.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsedData.date)) {
+            // The date is valid, so we do nothing and let it pass.
+        } else {
+            // The date is either not a string, or it is a string with an invalid format.
+            // In either case, we default to today's date.
             parsedData.date = new Date().toISOString().split('T')[0];
         }
 
